@@ -16,10 +16,12 @@ The project is structured efficiently in `src/`:
 
 ## 🚀 Installation
 
-1.  **Environment Setup**:Ensure you are using Python 3.9+ (tested with 3.12).
+1.  **Environment Setup**: Ensure you are using Python 3.9+ (tested with 3.12).
     
     ```bash
-    # Create and activate a virtual environmentpython3 -m venv .venvsource .venv/bin/activate
+    # Create and activate a virtual environment
+    python3 -m venv .venv
+    source .venv/bin/activate
     ```
     
 2.  **Install Dependencies**:
@@ -28,7 +30,7 @@ The project is structured efficiently in `src/`:
     pip install -r requirements.txt
     ```
     
-3.  **Download Spacy Model**:The pipeline uses Spacy for sentence segmentation.
+3.  **Download Spacy Model**: The pipeline uses Spacy for sentence segmentation.
     
     ```bash
     python -m spacy download ro_core_news_sm
@@ -44,7 +46,8 @@ The project uses a central CLI entry point: `main.py`.
 Fetch meeting transcripts and summaries from the CDEP website.
 
 ```bash
-# Scrape sessions from ID 8000 to 9000python main.py --scrape --start-id 8000 --end-id 9000
+# Scrape sessions from ID 8000 to 9000
+python main.py --scrape --start-id 8000 --end-id 9000
 ```
 
 *Output*: `data/processed/cdep_8000_9000.json`
@@ -80,7 +83,8 @@ python main.py --train-abs
 Compare the performance of the Extractive, Abstractive (Hybrid), and Baseline models using ROUGE scores.
 
 ```bash
-# Evaluate on a subset of 64 meetingspython main.py --evaluate --test-size 64
+# Evaluate on a subset of 64 meetings
+python main.py --evaluate --test-size 64
 ```
 
 ## 📊 Models
