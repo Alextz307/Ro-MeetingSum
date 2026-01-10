@@ -122,13 +122,12 @@ We constructed a custom dataset by scraping the official \textit{Camera Deputaț
 \begin{itemize}
     \item \textbf{Source:} \texttt{cdep.ro} (Debates section).
     \item \textbf{Extraction:} We extracted the full transcript (Source) and the "SUMAR" section (Target/Ground Truth).
-    \item \textbf{Size:} The dataset comprises approximately 1,500 meetings spanning the 2000-2024 legislative periods.
+    \item \textbf{Size:} The dataset comprises approximately 1.000 meetings spanning the 2017-2022 legislative periods.
     \item \textbf{Preprocessing:} Data was cleaned to remove HTML tags and encoding errors. The average input length is ~150,000 characters.
     \item \textbf{Splits:} 
     \begin{itemize}
         \item \textbf{Training Data:} We utilized sessions with IDs \textbf{8000 to 9000}, corresponding roughly to the \textbf{2019-2022} legislative period.
         \item \textbf{Evaluation Data:} We evaluated on a held-out set of IDs \textbf{7800 to 7950}, primarily from the \textbf{2017-2018} sessions.
-        \item \textit{Note: The temporal separation (Evaluation 2017-18 vs. Training 2019-22) ensures a robust test of the model's ability to generalize to future or distinct political contexts.}
     \end{itemize}
 \end{itemize}
 
