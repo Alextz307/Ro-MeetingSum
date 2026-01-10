@@ -85,7 +85,7 @@ To address the limitations of purely extractive or purely abstractive approaches
 
 Automatic Text Summarization (ATS) is the process of shortening a set of data computationally, to create a subset (a summary) that represents the most important or relevant information within the original content. There are two main paradigms in ATS:
 
-\subsubsection{1. Extractive vs. Abstractive Summarization}
+\subsubsection{Extractive vs. Abstractive Summarization}
 \begin{itemize}
     \item \textbf{Extractive Summarization} works by selecting specific sentences or phrases directly from the source text and assembling them to form a summary. It is analogous to highlighting important sections in a book with a marker.
     \begin{itemize}
@@ -100,7 +100,7 @@ Automatic Text Summarization (ATS) is the process of shortening a set of data co
     \end{itemize}
 \end{itemize}
 
-\subsubsection{2. The Extractive Model: MatchSum (Siamese BERT)}
+\subsubsection{The Extractive Model: MatchSum (Siamese BERT)}
 For the extraction phase, we employ \textbf{MatchSum} (Matching Summarization), which represents a shift from sentence-level scoring to document-level matching.
 \begin{itemize}
     \item \textbf{Base Architecture (BERT):} We use \texttt{bert-base-romanian-cased-v1}, a Transformer encoder pre-trained on a large corpus of Romanian text. BERT uses a mechanism called "Self-Attention" to understand the context of each word relative to every other word.
@@ -108,7 +108,7 @@ For the extraction phase, we employ \textbf{MatchSum} (Matching Summarization), 
     \item \textbf{Semantic Matching:} The model projects $D$ and $C$ into a shared vector space and calculates their cosine similarity. The goal is to find the set of sentences $C$ that is semantically closest to the entire document $D$. This captures global context better than scoring sentences in isolation.
 \end{itemize}
 
-\subsubsection{3. The Abstractive Model: mT5}
+\subsubsection{The Abstractive Model: mT5}
 For generation, we use \textbf{mT5 (Multilingual Text-to-Text Transfer Transformer)}, a variant of Google's T5 model.
 \begin{itemize}
     \item \textbf{Encoder-Decoder Architecture:} Unlike BERT (which is Encoder-only), T5 is an Encoder-Decoder model. The Encoder processes the input text into a high-dimensional representation, and the Decoder generates the summary token-by-token.
