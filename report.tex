@@ -185,26 +185,29 @@ The Extractive model acts as a "vacuum", sucking out the most important sentence
 Even after filtering, the text might exceed the 512-token limit of mT5-small. To handle this, we employ a multi-step strategy:
 
 \begin{enumerate}
-    \item \textbf{Regex Post-Processing:} Before generation, we strip specific parliamentary boilerplate that might confuse the model. This is handled in \texttt{src/processing/post\_processing.py}:
-\begin{lstlisting}[language=Python]
-# Aggressively remove titles and polite fluff
-text = re.sub(r"Deputat.*?(?=\.)", "", text) 
-text = re.sub(r"Stimați colegi", "", text)   
-text = re.sub(r"Doamna președinte", "", text)
-\end{lstlisting}
+    \item \textbf{Regex Post-Processing:} Before generation, we strip specific parliamentary boilerplate that might confuse the model. This is handled in \\ \texttt{src/processing/post\_processing.py}:
+    \begin{lstlisting}[language=Python]
+    # Aggressively remove titles and polite fluff
+    text = re.sub(r"Deputat.*?(?=\.)", "", text) 
+    text = re.sub(r"Stimați colegi", "", text)   
+    text = re.sub(r"Doamna președinte", "", text)
+    \end{lstlisting}
 
     \item \textbf{Sliding Windowing:} The clean text is then split into chunks of 450 tokens.
+    
     \item \textbf{Processing:} Each chunk is prepended with the prompt "summarize:" and fed to mT5.
+    
     \item \textbf{Generation Override:} We explicitly override the default generation configuration to prevent premature stopping:
-\begin{lstlisting}[language=Python]
-gen = pipeline(
-    "summarize: " + chunk_text,
-    max_length=300,        # Allow long summaries
-    min_length=60,         # Force detailed output
-    num_beams=4,           # Beam Search for higher quality
-    no_repeat_ngram_size=3 # Strict penalty for repetition
-)
-\end{lstlisting}
+    \begin{lstlisting}[language=Python]
+    gen = pipeline(
+        "summarize: " + chunk_text,
+        max_length=300,        # Allow long summaries
+        min_length=60,         # Force detailed output
+        num_beams=4,           # Beam Search for higher quality
+        no_repeat_ngram_size=3 # Strict penalty for repetition
+    )
+    \end{lstlisting}
+    
     \item \textbf{Concatenation:} The partial summaries are joined to form the final result.
 \end{enumerate}
 
