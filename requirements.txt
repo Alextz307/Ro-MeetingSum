@@ -1,0 +1,11 @@
+torch
+transformers
+rouge_score
+spacy
+requests
+beautifulsoup4
+tqdm
+urllib3
+lxml
+matplotlib
+numpy

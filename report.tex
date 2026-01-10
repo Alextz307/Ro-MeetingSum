@@ -1,0 +1,260 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{caption}
+
+% --- Page Setup ---
+\geometry{margin=2.5cm}
+
+% --- Code Block Styling ---
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% --- Title Page ---
+\title{
+    \vspace{2cm}
+    \textbf{Hybrid Abstractive-Extractive Summarization of Romanian Parliamentary Proceedings}\\
+    \large Natural Language Processing Techniques - Practical Project
+}
+\author{
+    \textbf{Team Members:} \\
+    Alexandru Lorintz \\
+    Adrian Iurian \\
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+% =========================================================================
+\section{Problem Statement}
+% =========================================================================
+
+The primary objective of this project is to develop an automatic text summarization (ATS) system specifically tailored for Romanian parliamentary proceedings. The source data originates from the Chamber of Deputies (Camera Deputaților), where sessions often span 3 to 5 hours, resulting in transcripts exceeding 300,000 characters.
+
+This task presents two significant NLP challenges:
+\begin{enumerate}
+    \item \textbf{High Noise Ratio:} Raw transcripts contain administrative roll calls, procedural interruptions, applause, and repetitive polite formulations (e.g., "Stimați colegi", "Doamna președinte") which dilute the core political arguments.
+    \item \textbf{Context Window Limitations:} Standard Transformer-based models (like BERT or T5) typically have a limit of 512 tokens. Processing a 300k-character document requires sophisticated handling beyond simple truncation.
+\end{enumerate}
+
+The goal is to produce a concise, coherent summary that captures the legislative outcomes (laws debated, votes taken) while filtering out procedural noise.
+
+% =========================================================================
+\section{Proposed Solution}
+% =========================================================================
+
+To address the limitations of purely extractive or purely abstractive approaches on such long documents, we propose a \textbf{Hybrid Pipeline}. This architecture uses an Extractive model as a "content selector" to filter the document, followed by an Abstractive model acting as a "rewriter" to synthesize the selection.
+
+\subsection{Theoretical Background}
+
+Automatic Text Summarization (ATS) is the process of shortening a set of data computationally, to create a subset (a summary) that represents the most important or relevant information within the original content. There are two main paradigms in ATS:
+
+\subsubsection{1. Extractive vs. Abstractive Summarization}
+\begin{itemize}
+    \item \textbf{Extractive Summarization} works by selecting specific sentences or phrases directly from the source text and assembling them to form a summary. It is analogous to highlighting important sections in a book with a marker.
+    \begin{itemize}
+        \item \textit{Pros:} Factual hallucination is impossible since every word comes from the source. It preserves the original tone.
+        \item \textit{Cons:} Can result in disjointed flow; cannot synthesize information distributed across multiple sentences; strictly bound by source vocabulary.
+    \end{itemize}
+    
+    \item \textbf{Abstractive Summarization} involves generating new sentences that capture the essence of the source text, similar to how a human would write a summary. It uses Natural Language Generation (NLG).
+    \begin{itemize}
+        \item \textit{Pros:} Can rephrase, paraphrase, and condense information more naturally. Can merge ideas from different parts of the text.
+        \item \textit{Cons:} Computationally expensive; prone to "hallucinations" (generating non-factual information); requires massive training data.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{2. The Extractive Model: MatchSum (Siamese BERT)}
+For the extraction phase, we employ \textbf{MatchSum} (Matching Summarization), which represents a shift from sentence-level scoring to document-level matching.
+\begin{itemize}
+    \item \textbf{Base Architecture (BERT):} We use \texttt{bert-base-romanian-cased-v1}, a Transformer encoder pre-trained on a large corpus of Romanian text. BERT uses a mechanism called "Self-Attention" to understand the context of each word relative to every other word.
+    \item \textbf{Siamese Network Structure:} MatchSum uses a Siamese framework, meaning two identical BERT models share weights. One encodes the whole document $D$, and the other encodes a candidate summary $C$.
+    \item \textbf{Semantic Matching:} The model projects $D$ and $C$ into a shared vector space and calculates their cosine similarity. The goal is to find the set of sentences $C$ that is semantically closest to the entire document $D$. This captures global context better than scoring sentences in isolation.
+\end{itemize}
+
+\subsubsection{3. The Abstractive Model: mT5}
+For generation, we use \textbf{mT5 (Multilingual Text-to-Text Transfer Transformer)}, a variant of Google's T5 model.
+\begin{itemize}
+    \item \textbf{Encoder-Decoder Architecture:} Unlike BERT (which is Encoder-only), T5 is an Encoder-Decoder model. The Encoder processes the input text into a high-dimensional representation, and the Decoder generates the summary token-by-token.
+    \item \textbf{Span Corruption Pre-training:} mT5 was pre-trained on the mC4 dataset (101 languages) using a "fill-in-the-blank" objective. It learns to reconstruct missing spans of text, giving it strong text generation capabilities.
+    \item \textbf{Fine-tuning:} We fine-tuned the \texttt{google/mt5-small} checkpoint specifically on our Parliamentary dataset to adapt its generation style to the formal, legislative language of the Romanian Chamber of Deputies.
+\end{itemize}
+
+\subsection{Data Set Used in Application}
+
+We constructed a custom dataset by scraping the official \textit{Camera Deputaților} website.
+\begin{itemize}
+    \item \textbf{Source:} \texttt{cdep.ro} (Debates section).
+    \item \textbf{Extraction:} We extracted the full transcript (Source) and the "SUMAR" section (Target/Ground Truth).
+    \item \textbf{Size:} The dataset comprises approximately 1,500 meetings spanning the 2000-2024 legislative periods.
+    \item \textbf{Preprocessing:} Data was cleaned to remove HTML tags and encoding errors. The average input length is ~150,000 characters, while target summaries average ~2,000 characters.
+\end{itemize}
+
+\subsection{Application Diagram}
+The application flow is illustrated below:
+
+\begin{figure}[H]
+    \centering
+    % You can draw this or insert an image. Description provided for context.
+    \fbox{\begin{minipage}{0.9\textwidth}
+        \centering
+        \textbf{1. Input:} Raw Transcript (300k chars) \\
+        $\downarrow$ \\
+        \textbf{2. Preprocessing:} Spacy Sentence Splitting \\
+        $\downarrow$ \\
+        \textbf{3. Extractive Filter (MatchSum):} Selects top 15\% semantic sentences \\
+        $\downarrow$ \\
+        \textbf{4. Regex Cleaning:} Removes titles/names \\
+        $\downarrow$ \\
+        \textbf{5. Chunking Strategy:} Sliding window (450 tokens) \\
+        $\downarrow$ \\
+        \textbf{6. Abstractive Generator (mT5):} Generates summary segments \\
+        $\downarrow$ \\
+        \textbf{7. Output:} Final Concatenated Summary
+    \end{minipage}}
+    \caption{The Hybrid Summarization Pipeline}
+    \label{fig:diagram}
+\end{figure}
+
+% =========================================================================
+\section{Implementation Details}
+% =========================================================================
+
+The critical innovation of this project lies in the robust engineering of the data pipeline and the seamless integration of two disparate models. The implementation is modular, organized into \texttt{processing}, \texttt{inference}, and \texttt{evaluation} components.
+
+\subsection{Data Acquisition \& Processing Pipeline}
+Handling 300k+ character documents requires rigorous preprocessing to prevent "garbage in, garbage out".
+
+\textbf{A. Scraping strategy:}
+We implemented a robust scraper (\texttt{CDEPScraper}) that handles legacy SSL protocols (SECLEVEL=1) required to access the government server. It iterates through session IDs, extracting the raw HTML content.
+
+\textbf{B. Cleaning \& Segmentation:}
+Raw transcripts are extremely noisy. The \texttt{DataProcessor} pipeline performs the following:
+\begin{enumerate}
+    \item \textbf{Noise Removal:} Regex patterns strip procedural text (e.g., "(applause)", "Point 3 on the agenda").
+    \item \textbf{Spacy Segmentation:} We use \texttt{ro\_core\_news\_sm} to split the text into sentences. This is non-trivial because of abbreviations (e.g., "Art. 5", "O.U.G. nr. 10"). Spacy's dependency parser helps correctly identify sentence boundaries where simple rule-based splitting fails.
+    \item \textbf{Dialogue Grouping:} Turns are grouped by speaker to maintain context coherence.
+\end{enumerate}
+
+\subsection{The "Vacuum" Filter (MatchSum Logic)}
+The Extractive model acts as a "vacuum", sucking out the most important sentences to create a condensed representation of the document.
+\begin{enumerate}
+    \item \textbf{Candidate Scoring:} The document is split into 5-sentence clusters. MatchSum scores these clusters against the entire document embedding.
+    \item \textbf{Selection Heuristic:} We select the top candidates based on a dynamic ratio ($r=0.15$). Importantly, we clamp this selection:
+    \[ k = \max(20, \min(80, N \times 0.15)) \]
+    This ensures that for very short debates, we still get enough context ($min=20$), and for marathon sessions, we do not flood the abstractive model ($max=80$).
+\end{enumerate}
+
+\subsection{"Divide and Conquer" Chunking Strategy}
+Even after filtering, the text might exceed the 512-token limit of mT5-small. To handle this, we employ a multi-step strategy:
+
+\begin{enumerate}
+    \item \textbf{Regex Post-Processing:} Before generation, we strip specific parliamentary boilerplate that might confuse the model. This is handled in \texttt{src/processing/post\_processing.py}:
+\begin{lstlisting}[language=Python]
+# Aggressively remove titles and polite fluff
+text = re.sub(r"Deputat.*?(?=\.)", "", text) 
+text = re.sub(r"Stimați colegi", "", text)   
+text = re.sub(r"Doamna președinte", "", text)
+\end{lstlisting}
+
+    \item \textbf{Sliding Windowing:} The clean text is then split into chunks of 450 tokens.
+    \item \textbf{Processing:} Each chunk is prepended with the prompt "summarize:" and fed to mT5.
+    \item \textbf{Generation Override:} We explicitly override the default generation configuration to prevent premature stopping:
+\begin{lstlisting}[language=Python]
+gen = pipeline(
+    "summarize: " + chunk_text,
+    max_length=300,        # Allow long summaries
+    min_length=60,         # Force detailed output
+    num_beams=4,           # Beam Search for higher quality
+    no_repeat_ngram_size=3 # Strict penalty for repetition
+)
+\end{lstlisting}
+    \item \textbf{Concatenation:} The partial summaries are joined to form the final result.
+\end{enumerate}
+
+% =========================================================================
+\section{Experiments and Results}
+% =========================================================================
+
+We evaluated our models in a test set of \textbf{64 meetings}. We utilized the \textbf{ROUGE} metric (Recall-Oriented Understudy for Gisting Evaluation) to measure overlap with the official human-written summaries.
+
+\subsection{Experimental Setup}
+We compared three approaches:
+\begin{enumerate}
+    \item \textbf{Baseline (Blind Slicing):} Feed the first, middle, and last 5,000 characters directly to mT5 without intelligent filtering.
+    \item \textbf{Extractive Only (MatchSum):} The raw output of the MatchSum model.
+    \item \textbf{Hybrid (Ours):} the complete pipeline (MatchSum $\rightarrow$ mT5).
+\end{enumerate}
+
+\subsection{Results}
+The final quantitative results are presented in Table \ref{tab:results} and visualized in Figure \ref{fig:comparison}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Method} & \textbf{ROUGE-1 (Content)} & \textbf{ROUGE-L (Structure)} \\
+        \midrule
+        1. Baseline (Blind Slicing) & 0.3051 & 0.1837 \\
+        2. Extractive (MatchSum) & 0.3380 & \textbf{0.2523} \\
+        3. Hybrid (Ours) & \textbf{0.3439} & 0.2367 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparative performance on N=64 test meetings.}
+    \label{tab:results}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Comparison Figure.png}
+    \caption{Performance comparison of the three strategies. The Hybrid model (Right) outperforms others in content coverage (ROUGE-1), while the Extractive model (Center) maintains higher structural similarity (ROUGE-L) due to direct sentence extraction.}
+    \label{fig:comparison}
+\end{figure}
+
+\subsection{Discussion}
+\begin{itemize}
+    \item \textbf{Superiority of Filtering:} both extractive and Hybrid models significantly outperformed the Baseline ($+3.8\%$ ROUGE-1), proving that intelligent content selection is crucial for long documents.
+    \item \textbf{The Hybrid Advantage:} Our Hybrid model achieved the highest ROUGE-1 score (\textbf{0.3439}). This indicates that rewriting the extracted sentences helps to merge context and remove irrelevant tokens that the Extractive model is forced to keep.
+    \item \textbf{Structural Analysis:} The Extractive model scored higher on ROUGE-L (0.25 vs 0.23). This is expected, as extractive models preserve exact sentence structures from the source, whereas abstractive models paraphrase, potentially altering the $n$-gram sequences despite retaining the meaning.
+\end{itemize}
+
+\section{Conclusion}
+This project successfully demonstrates a SOTA-level pipeline for summarizing Romanian parliamentary text. By combining the precision of BERT-based extraction with the fluency of T5-based generation, we solved the context window limitation and achieved a ROUGE-1 score of 0.34, effectively bridging the gap between raw transcripts and official reports.
+
+\end{document}
