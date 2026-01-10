@@ -245,7 +245,7 @@ We compared three approaches:
 \begin{enumerate}
     \item \textbf{Baseline (Blind Slicing):} Feed the first, middle, and last 5,000 characters directly to mT5 without intelligent filtering.
     \item \textbf{Extractive Only (MatchSum):} The raw output of the MatchSum model.
-    \item \textbf{Hybrid (Ours):} the complete pipeline (MatchSum $\rightarrow$ mT5).
+    \item \textbf{Hybrid:} the complete pipeline (MatchSum $\rightarrow$ mT5).
 \end{enumerate}
 
 \subsection{Evaluation Metric: ROUGE}
@@ -270,7 +270,7 @@ The final quantitative results are presented in Table \ref{tab:results} and visu
         \midrule
         1. Baseline (Blind Slicing) & 0.3051 & 0.1837 \\
         2. Extractive (MatchSum) & 0.3380 & \textbf{0.2523} \\
-        3. Hybrid (Ours) & \textbf{0.3439} & 0.2367 \\
+        3. Hybrid & \textbf{0.3439} & 0.2367 \\
         \bottomrule
     \end{tabular}
     \caption{Comparative performance on N=64 test meetings.}
