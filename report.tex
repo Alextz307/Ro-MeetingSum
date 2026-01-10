@@ -205,9 +205,15 @@ Even after filtering, the text might exceed the 512-token limit of mT5-small. To
     \item \textbf{Regex Post-Processing:} Before generation, we strip specific parliamentary boilerplate that might confuse the model. This is handled in \\ \texttt{src/processing/post\_processing.py}:
     \begin{lstlisting}[language=Python]
     # Aggressively remove titles and polite fluff
-    text = re.sub(r"Deputat.*?(?=\.)", "", text) 
-    text = re.sub(r"Stimați colegi", "", text)   
-    text = re.sub(r"Doamna președinte", "", text)
+    patterns = [
+        r"Deputat.*?(?=\.)",
+        r"Circumscriptia.*?(?=\.)",
+        r"Declaratia.*?intitulata",
+        r"Stimati colegi",
+        r"Domnule presedinte",
+    ]
+    for pat in patterns:
+        text = re.sub(pat, "", text, flags=re.IGNORECASE)
     \end{lstlisting}
 
     \item \textbf{Sliding Windowing:} The clean text is then split into chunks of 450 tokens.
