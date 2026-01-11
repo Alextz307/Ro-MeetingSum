@@ -351,7 +351,7 @@ The final quantitative results are presented in Table \ref{tab:results} and visu
     
     \item \textbf{Superiority of Filtering:} Both Extractive and Hybrid models significantly outperformed the Baseline ($+3.8\%$ ROUGE-1), proving that intelligent content selection is crucial for long documents.
     
-    \item \textbf{Structure vs Content:} The Extractive model scored higher on ROUGE-L (0.25 vs 0.23). This is typical for extractive approaches which preserve original sentence structures perfecty, whereas abstractive models paraphrase, potentially altering word sequences even if the meaning remains correct.
+    \item \textbf{Structure vs Content:} The Extractive model scored higher on ROUGE-L (0.25 vs 0.23). This is typical for extractive approaches which preserve original sentence structures perfectly, whereas abstractive models paraphrase, potentially altering word sequences even if the meaning remains correct.
 
     \item \textbf{Future Improvements (Scaling):} While we adhered to \texttt{mT5-small} (300M parameters) due to computational constraints, literature suggests that scaling to \textbf{mT5-base} ($\approx 580M$) or \textbf{mT5-large} ($\approx 1.2B$) would yield significant improvements in perplexity and fluency. The current pipeline is model-agnostic and could easily accommodate these larger checkpoints given sufficient GPU memory.
 \end{itemize}
