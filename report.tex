@@ -12,6 +12,8 @@
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning}
 
 % --- Page Setup ---
 \geometry{margin=2.5cm}
@@ -108,6 +110,30 @@ For the extraction phase, we employ \textbf{MatchSum} (Matching Summarization), 
     \item \textbf{Semantic Matching:} The model projects $D$ and $C$ into a shared vector space and calculates their cosine similarity. The goal is to find the set of sentences $C$ that is semantically closest to the entire document $D$. This captures global context better than scoring sentences in isolation.
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm, auto,
+        block/.style={rectangle, draw, fill=blue!10, text width=2.5cm, text centered, rounded corners, minimum height=1.2cm},
+        line/.style={draw, -latex', thick}]
+
+        % Nodes
+        \node [block] (batch) {Batch of Triplets};
+        \node [block, right=1cm of batch] (bert) {Siamese BERT\\(Shared Weights)};
+        \node [block, right=1.5cm of bert, yshift=1cm] (possim) {Cosine Sim\\(Doc, Pos)};
+        \node [block, right=1.5cm of bert, yshift=-1cm] (negsim) {Cosine Sim\\(Doc, Neg)};
+        \node [block, right=5cm of bert] (loss) {Margin Ranking Loss};
+
+        % Edges
+        \path [line] (batch) -- node[align=center, text width=2cm] {Doc, Pos, Neg} (bert);
+        \path [line] (bert) -- (possim);
+        \path [line] (bert) -- (negsim);
+        \path [line] (possim) -| (loss);
+        \path [line] (negsim) -| (loss);
+    \end{tikzpicture}
+    \caption{Training Pipeline for the Extractive (MatchSum) Model}
+    \label{fig:extractive_train}
+\end{figure}
+
 \subsubsection{The Abstractive Model: mT5}
 For generation, we use \textbf{mT5-small (Multilingual Text-to-Text Transfer Transformer)} which has roughly \textbf{300M parameters}.
 \begin{itemize}
@@ -115,6 +141,32 @@ For generation, we use \textbf{mT5-small (Multilingual Text-to-Text Transfer Tra
     \item \textbf{Span Corruption Pre-training:} mT5 was pre-trained on the mC4 dataset (101 languages) using a "fill-in-the-blank" objective. It learns to reconstruct missing spans of text, giving it strong text generation capabilities.
     \item \textbf{Fine-tuning:} We fine-tuned the \texttt{google/mt5-small} checkpoint specifically on our Parliamentary dataset to adapt its generation style to the formal, legislative language of the Romanian Chamber of Deputies.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm, auto,
+        block/.style={rectangle, draw, fill=green!10, text width=2.5cm, text centered, rounded corners, minimum height=1.2cm},
+        line/.style={draw, -latex', thick}]
+
+        % Nodes
+        \node [block] (input) {Input Clean Text};
+        \node [block, right=1cm of input] (encoder) {mT5 Encoder};
+        \node [block, right=1cm of encoder] (decoder) {mT5 Decoder};
+        \node [block, below=1cm of decoder] (target) {Target Summary};
+        \node [block, right=1cm of decoder] (output) {Logits};
+        \node [block, right=1cm of output] (loss) {Cross Entropy Loss};
+
+        % Edges
+        \path [line] (input) -- (encoder);
+        \path [line] (encoder) -- (decoder);
+        \path [line] (target) -- (decoder);
+        \path [line] (decoder) -- (output);
+        \path [line] (output) -- (loss);
+
+    \end{tikzpicture}
+    \caption{Training Pipeline for the Abstractive (mT5) Model}
+    \label{fig:abstractive_train}
+\end{figure}
 
 \subsection{Data Set Used in Application}
 
@@ -210,10 +262,13 @@ Even after filtering, the text might exceed the 512-token limit of mT5-small. To
         r"Circumscriptia.*?(?=\.)",
         r"Declaratia.*?intitulata",
         r"Stimati colegi",
+        r"Doamna presedinte",
         r"Domnule presedinte",
     ]
     for pat in patterns:
         text = re.sub(pat, "", text, flags=re.IGNORECASE)
+
+    return re.sub(r"\s+", " ", text).strip()
     \end{lstlisting}
 
     \item \textbf{Sliding Windowing:} The clean text is then split into chunks of 450 tokens.

@@ -106,6 +106,62 @@ python main.py --evaluate --test-size 64
 -   **Extractive**: Uses a Siamese BERT (`distilbert` or `bert-base-romanian-cased-v1`) to score the relevance of each sentence in the context of the document.
 -   **Abstractive**: Fine-tunes `google/mt5-small` to generate coherent summaries from the extracted key sentences.
 
+## 🧠 Training Pipelines
+
+### 1. Extractive Model (MatchSum)
+The extractive model is trained using a **Siamese Network** structure with a triplet loss approach. It learns to rank "Positive" candidate summaries (high ROUGE overlap with ground truth) higher than "Negative" candidates.
+
+```mermaid
+graph LR
+    subgraph Data[Data Loading]
+    BATCH[Batch of Triplets]
+    BATCH --> DOC[Document]
+    BATCH --> POS[Pos. Candidate]
+    BATCH --> NEG[Neg. Candidate]
+    end
+
+    subgraph Siamese[Siamese BERT Encoder]
+    DOC --> BERT[BERT]
+    POS --> BERT
+    NEG --> BERT
+    end
+
+    subgraph Opt[Optimization]
+    BERT -- Emb. Doc --> S1[Cosine Sim]
+    BERT -- Emb. Pos --> S1
+    BERT -- Emb. Doc --> S2[Cosine Sim]
+    BERT -- Emb. Neg --> S2
+    
+    S1 -- Score Pos --> LOSS[Margin Ranking Loss]
+    S2 -- Score Neg --> LOSS
+    LOSS --> BACK[Backprop]
+    end
+```
+
+### 2. Abstractive Model (mT5)
+The abstractive model is fine-tuned largely using standard **Seq2Seq** techniques with Teacher Forcing.
+
+```mermaid
+graph LR
+    subgraph Prep[Data Preparation]
+    RAW[Clean Data] --> TOK[Tokenizer]
+    TOK --> IN[Input: <br/>'summarize: ' + Text]
+    TOK --> TGT[Target: <br/>Ground Truth Summary]
+    end
+
+    subgraph Model[mT5 Seq2Seq]
+    IN --> ENC[Encoder]
+    ENC --> DEC[Decoder]
+    TGT --> DEC
+    end
+
+    subgraph Loss[Optimization]
+    DEC --> OUT[Generated Logits]
+    OUT --> CEL[Cross Entropy Loss]
+    CEL --> UPD[Update Weights]
+    end
+```
+
 ## 📄 License
 
 This project is for educational and research purposes. Data is sourced from public parliamentary records.
