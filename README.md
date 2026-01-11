@@ -14,6 +14,20 @@ The project is structured efficiently in `src/`:
 -   **`src/evaluation`**: Comparative evaluation using ROUGE metrics.
 -   **`src/config.py`**: Centralized configuration for file paths and parameters.
 
+## 🏗️ Pipeline Diagram
+
+The following diagram illustrates the Hybrid Summarization Pipeline:
+
+```mermaid
+graph TD
+    A[<b>1. Input</b><br/>Raw Transcript<br/>~300k chars] --> B[<b>2. Preprocessing</b><br/>Spacy Sentence Splitting]
+    B --> C[<b>3. Extractive Filter</b><br/>MatchSum<br/>Selects top 15% semantic sentences]
+    C --> D[<b>4. Regex Cleaning</b><br/>Removes titles/names]
+    D --> E[<b>5. Chunking Strategy</b><br/>Sliding window<br/>450 tokens]
+    E --> F[<b>6. Abstractive Generator</b><br/>mT5<br/>Generates summary segments]
+    F --> G[<b>7. Output</b><br/>Final Concatenated Summary]
+```
+
 ## 🚀 Installation
 
 1.  **Environment Setup**: Ensure you are using Python 3.9+ (tested with 3.12).
