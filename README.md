@@ -28,6 +28,11 @@ graph TD
     F --> G[<b>7. Output</b><br/>Final Concatenated Summary]
 ```
 
+## 💾 Project Data & Models
+
+You can download the full project archive, including scraped data and trained model checkpoints, from the following link:
+[**Download Models & Data**](https://drive.google.com/file/d/1zPDl1pwS08In28DZZwXUG_cwKTj_ROWB/view?usp=sharing)
+
 ## 🚀 Installation
 
 1.  **Environment Setup**: Ensure you are using Python 3.9+ (tested with 3.12).
