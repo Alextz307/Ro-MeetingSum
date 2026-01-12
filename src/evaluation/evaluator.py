@@ -103,6 +103,11 @@ class ModelEvaluator:
                     s_hybrid = scorer.score(ground_truth, summary_hybrid)
                     hybrid_scores["r1"].append(float(s_hybrid["rouge1"].fmeasure))  # type: ignore
                     hybrid_scores["rl"].append(float(s_hybrid["rougeL"].fmeasure))  # type: ignore
+
+                    if i == 0:
+                        print("\n" + "=" * 20 + " EXAMPLE HYBRID SUMMARY " + "=" * 20)
+                        print(summary_hybrid)
+                        print("=" * 64 + "\n")
                 except Exception as e:
                     print(f"  Hybrid Failed: {e}")
 
@@ -133,10 +138,39 @@ class ModelEvaluator:
             except Exception as e:
                 print(f"  Baseline Failed: {e}")
 
+            if i == 0:
+                print("\n" + "=" * 20 + " EXAMPLE SUMMARIES (ITEM 0) " + "=" * 20)
+                print(f"\n[1] EXTRACTIVE (MatchSum):\n{summary_ext}\n")
+                print("-" * 60)
+                if "summary_hybrid" in locals():
+                    print(f"\n[2] HYBRID (MatchSum + mT5):\n{summary_hybrid}\n")
+                else:
+                    print("\n[2] HYBRID: (Skipped/Failed)\n")
+                print("-" * 60)
+                if "summary_baseline" in locals():
+                    print(f"\n[3] BASELINE (Blind Check):\n{summary_baseline}\n")
+                else:
+                    print("\n[3] BASELINE: (Skipped/Failed)\n")
+                print("=" * 64 + "\n")
+
         def get_avg(scores: list[float]) -> float:
             return sum(scores) / len(scores) if len(scores) > 0 else 0.0
 
         print("\n" + "=" * 60)
+        print(f"FINAL RESULTS TABLE (N={len(test_data)})")
+        print("=" * 60)
+        print(f"{'METHOD':<30} | {'ROUGE-1':<10} | {'ROUGE-L':<10}")
+        print("-" * 60)
+        print(
+            f"{'1. Baseline (Blind Slicing)':<30} | {get_avg(baseline_scores['r1']):.4f}     | {get_avg(baseline_scores['rl']):.4f}"
+        )
+        print(
+            f"{'2. Extractive (MatchSum)':<30} | {get_avg(ext_scores['r1']):.4f}     | {get_avg(ext_scores['rl']):.4f}"
+        )
+        print(
+            f"{'3. Hybrid (Intelligent Filter)':<30} | {get_avg(hybrid_scores['r1']):.4f}     | {get_avg(hybrid_scores['rl']):.4f}"
+        )
+        print("=" * 60)
         print(f"FINAL RESULTS TABLE (N={len(test_data)})")
         print("=" * 60)
         print(f"{'METHOD':<30} | {'ROUGE-1':<10} | {'ROUGE-L':<10}")
