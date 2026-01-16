@@ -51,9 +51,7 @@
     \large Natural Language Processing Techniques - Practical Project
 }
 \author{
-    \textbf{Team Members:} \\
     Alexandru Lorintz \\
-    Adrian Iurian \\
 }
 \date{\today}
 
@@ -81,7 +79,7 @@ The goal is to produce a concise, coherent summary that captures the legislative
 \section{Proposed Solution}
 % =========================================================================
 
-To address the limitations of purely extractive or purely abstractive approaches on such long documents, we propose a \textbf{Hybrid Pipeline}. This architecture uses an Extractive model as a "content selector" to filter the document, followed by an Abstractive model acting as a "rewriter" to synthesize the selection.
+To address the limitations of purely extractive or purely abstractive approaches on such long documents, I propose a \textbf{Hybrid Pipeline}. This architecture uses an Extractive model as a "content selector" to filter the document, followed by an Abstractive model acting as a "rewriter" to synthesize the selection.
 
 \subsection{Theoretical Background}
 
@@ -103,9 +101,9 @@ Automatic Text Summarization (ATS) is the process of shortening a set of data co
 \end{itemize}
 
 \subsubsection{The Extractive Model: MatchSum (Siamese BERT)}
-For the extraction phase, we employ \textbf{MatchSum} (Matching Summarization), which represents a shift from sentence-level scoring to document-level matching.
+For the extraction phase, I employ \textbf{MatchSum} (Matching Summarization), which represents a shift from sentence-level scoring to document-level matching.
 \begin{itemize}
-    \item \textbf{Base Architecture (BERT):} We use \texttt{bert-base-romanian-cased-v1} (\textbf{$\approx$ 110M parameters}), a Transformer encoder pre-trained on a large corpus of Romanian text. BERT uses a mechanism called "Self-Attention" to understand the context of each word relative to every other word.
+    \item \textbf{Base Architecture (BERT):} I use \texttt{bert-base-romanian-cased-v1} (\textbf{$\approx$ 110M parameters}), a Transformer encoder pre-trained on a large corpus of Romanian text. BERT uses a mechanism called "Self-Attention" to understand the context of each word relative to every other word.
     \item \textbf{Siamese Network Structure:} MatchSum uses a Siamese framework, meaning two identical BERT models share weights. One encodes the whole document $D$, and the other encodes a candidate summary $C$.
     \item \textbf{Semantic Matching:} The model projects $D$ and $C$ into a shared vector space and calculates their cosine similarity. The goal is to find the set of sentences $C$ that is semantically closest to the entire document $D$. This captures global context better than scoring sentences in isolation.
 \end{itemize}
@@ -135,11 +133,11 @@ For the extraction phase, we employ \textbf{MatchSum} (Matching Summarization), 
 \end{figure}
 
 \subsubsection{The Abstractive Model: mT5}
-For generation, we use \textbf{mT5-small (Multilingual Text-to-Text Transfer Transformer)} which has roughly \textbf{300M parameters}.
+For generation, I use \textbf{mT5-small (Multilingual Text-to-Text Transfer Transformer)} which has roughly \textbf{300M parameters}.
 \begin{itemize}
     \item \textbf{Encoder-Decoder Architecture:} Unlike BERT (which is Encoder-only), T5 is an Encoder-Decoder model. The Encoder processes the input text into a high-dimensional representation, and the Decoder generates the summary token-by-token.
     \item \textbf{Span Corruption Pre-training:} mT5 was pre-trained on the mC4 dataset (101 languages) using a "fill-in-the-blank" objective. It learns to reconstruct missing spans of text, giving it strong text generation capabilities.
-    \item \textbf{Fine-tuning:} We fine-tuned the \texttt{google/mt5-small} checkpoint specifically on our Parliamentary dataset to adapt its generation style to the formal, legislative language of the Romanian Chamber of Deputies.
+    \item \textbf{Fine-tuning:} I fine-tuned the \texttt{google/mt5-small} checkpoint specifically on my Parliamentary dataset to adapt its generation style to the formal, legislative language of the Romanian Chamber of Deputies.
 \end{itemize}
 
 \begin{figure}[H]
@@ -170,16 +168,16 @@ For generation, we use \textbf{mT5-small (Multilingual Text-to-Text Transfer Tra
 
 \subsection{Data Set Used in Application}
 
-We constructed a custom dataset by scraping the official \textit{Camera Deputaților} website.
+I constructed a custom dataset by scraping the official \textit{Camera Deputaților} website.
 \begin{itemize}
     \item \textbf{Source:} \texttt{cdep.ro} (Debates section).
-    \item \textbf{Extraction:} We extracted the full transcript (Source) and the "SUMAR" section (Target/Ground Truth).
+    \item \textbf{Extraction:} I extracted the full transcript (Source) and the "SUMAR" section (Target/Ground Truth).
     \item \textbf{Size:} The dataset comprises approximately 1.000 meetings spanning the 2017-2022 legislative periods.
     \item \textbf{Preprocessing:} Data was cleaned to remove HTML tags and encoding errors. The average input length is ~150,000 characters.
     \item \textbf{Splits:} 
     \begin{itemize}
-        \item \textbf{Training Data:} We utilized sessions with IDs \textbf{8000 to 9000}, corresponding roughly to the \textbf{2019-2022} legislative period.
-        \item \textbf{Evaluation Data:} We evaluated on a held-out set of IDs \textbf{7800 to 7950}, primarily from the \textbf{2017-2018} sessions.
+        \item \textbf{Training Data:} I utilized sessions with IDs \textbf{8000 to 9000}, corresponding roughly to the \textbf{2019-2022} legislative period.
+        \item \textbf{Evaluation Data:} I evaluated on a held-out set of IDs \textbf{7800 to 7950}, primarily from the \textbf{2017-2018} sessions.
     \end{itemize}
 \end{itemize}
 
@@ -220,14 +218,14 @@ Handling 300k+ character documents requires rigorous preprocessing to prevent "g
 \\
 
 \textbf{A. Scraping strategy:}
-We implemented a robust scraper (\texttt{CDEPScraper}) that handles legacy SSL protocols (SECLEVEL=1) required to access the government server. It iterates through session IDs, extracting the raw HTML content.
+I implemented a robust scraper (\texttt{CDEPScraper}) that handles legacy SSL protocols (SECLEVEL=1) required to access the government server. It iterates through session IDs, extracting the raw HTML content.
 \\
 
 \textbf{B. Cleaning \& Segmentation:}
 Raw transcripts are extremely noisy. The \texttt{DataProcessor} pipeline performs the following:
 \begin{enumerate}
     \item \textbf{Noise Removal:} Regex patterns strip procedural text (e.g., "(applause)", "Point 3 on the agenda").
-    \item \textbf{Spacy Segmentation:} We use \texttt{ro\_core\_news\_sm} to split the text into sentences. This is non-trivial because of abbreviations (e.g., "Art. 5", "O.U.G. nr. 10"). Spacy's dependency parser helps correctly identify sentence boundaries where simple rule-based splitting fails.
+    \item \textbf{Spacy Segmentation:} I use \texttt{ro\_core\_news\_sm} to split the text into sentences. This is non-trivial because of abbreviations (e.g., "Art. 5", "O.U.G. nr. 10"). Spacy's dependency parser helps correctly identify sentence boundaries where simple rule-based splitting fails.
     \item \textbf{Dialogue Grouping:} Turns are grouped by speaker to maintain context coherence.
 \end{enumerate}
 
@@ -236,25 +234,25 @@ The Extractive model acts as a "vacuum", sucking out the most important sentence
 \begin{enumerate}
     \item \textbf{Global Candidate Scoring:} Unlike the abstractive model which requires chunking, the Extractive model can iterate through \textbf{all sentences} in the document. 
     \begin{itemize}
-        \item We tokenize every sentence individually ($S_i$).
-        \item We compare each $S_i$ against the dense vector representation of the document's context ($D$).
+        \item I tokenize every sentence individually ($S_i$).
+        \item I compare each $S_i$ against the dense vector representation of the document's context ($D$).
         \item This allows the model to "hunt" for key information from the beginning, middle, and end of the transcript without windowing boundaries.
     \end{itemize}
-    \item \textbf{Selection Heuristic & Parameter Tuning:} We empirically determined a selection ratio of $r=0.15$ with strict bounds:
+    \item \textbf{Selection Heuristic & Parameter Tuning:} I empirically determined a selection ratio of $r=0.15$ with strict bounds:
     \[ k = \max(20, \min(80, N \times 0.15)) \]
     The rationale behind these values is threefold:
     \begin{itemize}
-        \item \textbf{Why 15\%?} There is a natural trade-off between ROUGE scores and summary conciseness. Our experiments demonstrated that increasing the ratio from 5\% to 10\% to 15\% yielded consistent gains in ROUGE (higher recall of key facts). However, beyond this point, the gain diminishes while the noise drastically increases.
+        \item \textbf{Why 15\%?} There is a natural trade-off between ROUGE scores and summary conciseness. My experiments demonstrated that increasing the ratio from 5\% to 10\% to 15\% yielded consistent gains in ROUGE (higher recall of key facts). However, beyond this point, the gain diminishes while the noise drastically increases.
         \item \textbf{Why Max=80?} Computing resources and the Abstractive model's context window are finite. Feeding more than 80 sentences ($\approx 2000$ tokens) tends to overwhelm the mT5 decoder, leading to "forgetting" or hallucinations. This cap acts as a safety valve for marathon sessions.
-        \item \textbf{Why Min=20?} For extremely short debates, a percentage-based cut might yield only 1-2 sentences, lacking the context required for a coherent narrative. We enforce a minimum floor to ensure the generator always has enough material to work with.
+        \item \textbf{Why Min=20?} For extremely short debates, a percentage-based cut might yield only 1-2 sentences, lacking the context required for a coherent narrative. I enforce a minimum floor to ensure the generator always has enough material to work with.
     \end{itemize}
 \end{enumerate}
 
 \subsection{"Divide and Conquer" Chunking Strategy}
-Even after filtering, the text might exceed the 512-token limit of mT5-small. To handle this, we employ a multi-step strategy:
+Even after filtering, the text might exceed the 512-token limit of mT5-small. To handle this, I employ a multi-step strategy:
 
 \begin{enumerate}
-    \item \textbf{Regex Post-Processing:} Before generation, we strip specific parliamentary boilerplate that might confuse the model. This is handled in \\ \texttt{src/processing/post\_processing.py}:
+    \item \textbf{Regex Post-Processing:} Before generation, I strip specific parliamentary boilerplate that might confuse the model. This is handled in \\ \texttt{src/processing/post\_processing.py}:
     \begin{lstlisting}[language=Python]
     # Aggressively remove titles and polite fluff
     patterns = [
@@ -275,7 +273,7 @@ Even after filtering, the text might exceed the 512-token limit of mT5-small. To
     
     \item \textbf{Processing:} Each chunk is prepended with the prompt "summarize:" and fed to mT5.
     
-    \item \textbf{Generation Override:} We explicitly override the default generation configuration to prevent premature stopping:
+    \item \textbf{Generation Override:} I explicitly override the default generation configuration to prevent premature stopping:
     \begin{lstlisting}[language=Python]
     gen = pipeline(
         "summarize: " + chunk_text,
@@ -293,10 +291,10 @@ Even after filtering, the text might exceed the 512-token limit of mT5-small. To
 \section{Experiments and Results}
 % =========================================================================
 
-We evaluated our models in a test set of \textbf{64 meetings}. We utilized the \textbf{ROUGE} metric (Recall-Oriented Understudy for Gisting Evaluation) to measure overlap with the official human-written summaries.
+I evaluated my models in a test set of \textbf{64 meetings}. I utilized the \textbf{ROUGE} metric (Recall-Oriented Understudy for Gisting Evaluation) to measure overlap with the official human-written summaries.
 
 \subsection{Experimental Setup}
-We compared three approaches:
+I compared three approaches:
 \begin{enumerate}
     \item \textbf{Baseline (Blind Slicing):} Feed the first, middle, and last 5,000 characters directly to mT5 without intelligent filtering.
     \item \textbf{Extractive Only (MatchSum):} The raw output of the MatchSum model.
@@ -304,9 +302,9 @@ We compared three approaches:
 \end{enumerate}
 
 \subsection{Evaluation Metric: ROUGE}
-To quantitatively assess the quality of our summaries, we utilize the \textbf{ROUGE} (Recall-Oriented Understudy for Gisting Evaluation) metric, which is the standard de-facto metric for NLP summarization tasks. ROUGE measures the overlap between the generated summary ($S$) and the reference human summary ($R$).
+To quantitatively assess the quality of my summaries, I utilize the \textbf{ROUGE} (Recall-Oriented Understudy for Gisting Evaluation) metric, which is the standard de-facto metric for NLP summarization tasks. ROUGE measures the overlap between the generated summary ($S$) and the reference human summary ($R$).
 
-We focus on two specific variants:
+I focus on two specific variants:
 \begin{itemize}
     \item \textbf{ROUGE-1:} Measures the overlap of unigrams (single words). It is effective for assessing content coverage (informativeness).
     \[ \text{ROUGE-1} = \frac{\sum_{r \in R} \sum_{w \in r} \text{count}_{\text{match}}(w)}{\sum_{r \in R} \sum_{w \in r} \text{count}(w)} \]
@@ -347,16 +345,16 @@ The final quantitative results are presented in Table \ref{tab:results} and visu
         \item For low-resource languages like Romanian, typical scores are in the \textbf{0.35 - 0.40} range.
     \end{itemize}
     
-    \item \textbf{Performance Context:} Our Hybrid model's score of \textbf{0.3439} is highly competitive for the Romanian language, especially given the difficulty of the parliamentary domain (long-context). It aligns with recent benchmarks on Romanian GPT-2 based summarization.
+    \item \textbf{Performance Context:} My Hybrid model's score of \textbf{0.3439} is highly competitive for the Romanian language, especially given the difficulty of the parliamentary domain (long-context). It aligns with recent benchmarks on Romanian GPT-2 based summarization.
     
     \item \textbf{Superiority of Filtering:} Both Extractive and Hybrid models significantly outperformed the Baseline ($+3.8\%$ ROUGE-1), proving that intelligent content selection is crucial for long documents.
     
     \item \textbf{Structure vs Content:} The Extractive model scored higher on ROUGE-L (0.25 vs 0.23). This is typical for extractive approaches which preserve original sentence structures perfectly, whereas abstractive models paraphrase, potentially altering word sequences even if the meaning remains correct.
 
-    \item \textbf{Future Improvements (Scaling):} While we adhered to \texttt{mT5-small} (300M parameters) due to computational constraints, literature suggests that scaling to \textbf{mT5-base} ($\approx 580M$) or \textbf{mT5-large} ($\approx 1.2B$) would yield significant improvements in perplexity and fluency. The current pipeline is model-agnostic and could easily accommodate these larger checkpoints given sufficient GPU memory.
+    \item \textbf{Future Improvements (Scaling):} While I adhered to \texttt{mT5-small} (300M parameters) due to computational constraints, literature suggests that scaling to \textbf{mT5-base} ($\approx 580M$) or \textbf{mT5-large} ($\approx 1.2B$) would yield significant improvements in perplexity and fluency. The current pipeline is model-agnostic and could easily accommodate these larger checkpoints given sufficient GPU memory.
 \end{itemize}
 
 \section{Conclusion}
-This project successfully demonstrates a SOTA-level pipeline for summarizing Romanian parliamentary text. By combining the precision of BERT-based extraction with the fluency of T5-based generation, we solved the context window limitation and achieved a ROUGE-1 score of 0.34, effectively bridging the gap between raw transcripts and official reports.
+This project successfully demonstrates a SOTA-level pipeline for summarizing Romanian parliamentary text. By combining the precision of BERT-based extraction with the fluency of T5-based generation, I solved the context window limitation and achieved a ROUGE-1 score of 0.34, effectively bridging the gap between raw transcripts and official reports.
 
 \end{document}
